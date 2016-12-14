@@ -14,7 +14,9 @@ import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.RobotLog;
 import com.vuforia.HINT;
 import com.vuforia.Vuforia;
 
@@ -31,6 +33,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
+import java.sql.Ref;
+import java.util.Set;
+
 /**
  * Created by Trevor on 11/5/2016.
  */
@@ -42,7 +47,7 @@ public abstract class LinearHardwareMap extends LinearOpMode {
     public DcMotor Catapult;
     public DcMotor BallCollection;
     public DcMotor CapBallLiftLeft;
-    public DcMotor CapBallLiftRight;
+    public DcMotor ButtonPusherActuator;
     public GyroSensor Gyro;
     public ColorSensor BeaconColorSensor;
     public OpticalDistanceSensor WhiteLineFinder;
@@ -50,6 +55,8 @@ public abstract class LinearHardwareMap extends LinearOpMode {
     public ModernRoboticsI2cRangeSensor FrontRangeSensor;
     public ModernRoboticsI2cRangeSensor BackRangeSensor;
     public TouchSensor CatapultStop;
+    public TouchSensor ButtonPusherMax;
+    public TouchSensor ButtonPusherMin;
     public Servo ButtonPusherArm;
     public Servo ButtonPusher;
     public Servo CapBallFork;
@@ -71,7 +78,7 @@ public abstract class LinearHardwareMap extends LinearOpMode {
     public String catapult = "c"; // VTAV Port 1
     public String ballCollection = "bc"; //VTAV Port 2
     public String capBallLiftLeft = "cbll"; //SXSX
-    public String capBallLiftRight = "cblr";   //SXSX
+    public String buttonPusherActuator = "bpa";   //SXSX
     public String gyroSensor = "gyro";
     public String beaconColorSensor = "bcs";
     public String whiteLineFinder = "wlf";
@@ -85,12 +92,11 @@ public abstract class LinearHardwareMap extends LinearOpMode {
     public String ballControll = "ballco";
     public String buttonPusher = "bp";
     public String buttonPusherArm = "bpa";
-    public double ballControlStartPosition = 1;
+    public double ballControlStartPosition = .7;
     public double ballControlEngagedPosition = 0;
-    public double buttonPusherStow = 0;
-    public double buttonPusherEngage = .3;
     public double buttonPusherLeft = 1;
-    public double buttonPusherRight = .4;
+    public double buttonPusherRight = .2;
+    public double buttonPusherCenter = .6;
     public float LinearproportionalConstant = 0;
     public float LinearintegralConstant = 0;
     public float LinearderivitiveConstant = 0;
@@ -128,6 +134,8 @@ public abstract class LinearHardwareMap extends LinearOpMode {
 */
     double TurningConstant=.0125;
     String VuforiaLicenseKey = "AbkJpf//////AAAAGfwmmKkkGUDwrRcXe4puyLQhZ3m1wmsmuJUw2GVDtb7tWinUTnSd+UmyGz5aylC8ShWX8ayvA9h2mDtWnM1s3yni7S/WtH8buZO7gUBz9FotxNPJGL8Di9VJSmOhzEoyHLivQpx/vPwoH0Aejcvr1lBt8b5yMEgegLQ+WbmwNmj25ciaaMFDhryp7CTOzZFswvIUdhZ84PBJJew94ewMFjrsGNqra+0beno8wvEH9XmHp2kj9lVT+u8EjZdSQuEowkS5Lw2bnmOCMfPk9/00KZ+xBfaa2LDB3IXuYR2FVdd6qORTWXA8N120mYbCx8x8U7R4JdZs/eAH279CtHqFyFPdQtj3qn3Of7Z3urbcezNu";
+    float Linearlasterror=0;
+    ElapsedTime runtime = new ElapsedTime();
 
     public int getIntegratedZValue() {// Fixes the problematic wrap around from 0 to 359.
         int heading = Gyro.getHeading();
@@ -156,8 +164,8 @@ public abstract class LinearHardwareMap extends LinearOpMode {
         if (BallCollection != null) {
             BallCollection.setPower(0);
         }
-        if (CapBallLiftRight != null) {
-            CapBallLiftRight.setPower(0);
+        if (ButtonPusherActuator != null) {
+            ButtonPusherActuator.setPower(0);
         }
         if (CapBallLiftLeft != null) {
             CapBallLiftLeft.setPower(0);
@@ -165,10 +173,37 @@ public abstract class LinearHardwareMap extends LinearOpMode {
     }
 
     public void Calibrate() {
-        if (Gyro != null) {
+        /*if (Gyro != null) {
             Gyro.calibrate();
-        }
+        }*/
         SetMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
+    public double PidPowerAdjustment(int TargetAngle) {
+
+        float LinearCumulativeerror = 0;
+        float LinearproportionalCorrection;
+        float LinearintegralCorrection;
+        float LinearSlopeofderivitive;
+        float LinearMaxCorrection = 100;
+        float LinearMinCorrection = 15;
+        float Linearerror = Math.abs(TargetAngle - getIntegratedZValue());
+        LinearproportionalCorrection = (LinearproportionalConstant * Linearerror);
+        LinearCumulativeerror += Linearerror;
+        LinearintegralCorrection = (LinearintegralConstant * LinearCumulativeerror);
+        LinearSlopeofderivitive = Linearerror - Linearlasterror;
+        float Linearderivitivecorrection = (LinearSlopeofderivitive * LinearderivitiveConstant);
+
+
+        float LinearCorrection = LinearproportionalCorrection + LinearintegralCorrection + Linearderivitivecorrection;
+
+        if (LinearCorrection > LinearMaxCorrection) {
+            LinearCorrection = LinearMaxCorrection;
+        } else if (LinearCorrection < LinearMinCorrection) {
+            LinearCorrection = LinearMinCorrection;
+        } else LinearCorrection = LinearCorrection;
+        return LinearCorrection;
+
     }
 
     public void AutonomousHardwareMap() {
@@ -184,7 +219,7 @@ public abstract class LinearHardwareMap extends LinearOpMode {
         Catapult = hardwareMap.dcMotor.get(catapult);
         BallCollection = hardwareMap.dcMotor.get(ballCollection);
         CapBallLiftLeft = hardwareMap.dcMotor.get(capBallLiftLeft);
-        CapBallLiftRight = hardwareMap.dcMotor.get(capBallLiftRight);
+        ButtonPusherActuator = hardwareMap.dcMotor.get(buttonPusherActuator);
 
         CatapultStop = hardwareMap.touchSensor.get(catapultStop);
 
@@ -204,18 +239,12 @@ public abstract class LinearHardwareMap extends LinearOpMode {
 
         BeaconColorSensor = hardwareMap.colorSensor.get(beaconColorSensor);
         WhiteLineFinder = hardwareMap.opticalDistanceSensor.get(whiteLineFinder);
-        BeaconColorSensor.setI2cAddress(I2cAddr.create7bit(0x1e));
         BeaconColorSensor.enableLed(false);
-        WhiteLineFinder.enableLed(true);
-
     }
 
     public void InitializeServoPositions() {
         if (BallControl != null) {
             BallControl.setPosition(ballControlStartPosition);
-        }
-        if (ButtonPusherArm != null) {
-            ButtonPusherArm.setPosition(buttonPusherStow);
         }
         if (ButtonPusher != null) {
             ButtonPusher.setPosition(buttonPusherLeft);
@@ -223,13 +252,13 @@ public abstract class LinearHardwareMap extends LinearOpMode {
 
     }
 
-
     public void setPower(double FL, double FR, double BL, double BR, double Constant) {
         FrontLeft.setPower(FL);
         FrontRight.setPower(FR*Constant);
         BackLeft.setPower(BL);
         BackRight.setPower(BR*Constant);
     }
+
     public void setPower(double FL, double FR, double BL, double BR) {
         FrontLeft.setPower(FL);
         FrontRight.setPower(FR);
@@ -250,6 +279,7 @@ public abstract class LinearHardwareMap extends LinearOpMode {
         BackLeft.setMaxSpeed(TicksPerSecond);
         BackRight.setMaxSpeed(TicksPerSecond);
     }
+
     public void setMaxSpeed(int TicksPerSecond, double Constant) {
         FrontLeft.setMaxSpeed(TicksPerSecond);
         FrontRight.setMaxSpeed((int) (TicksPerSecond*Constant));
@@ -267,6 +297,8 @@ public abstract class LinearHardwareMap extends LinearOpMode {
         SetMode(DcMotor.RunMode.RUN_TO_POSITION);
         sleep(50);
         double EncoderTicks = CountsPerInch * Distance;
+        double difference =TargetAngle- getIntegratedZValue();
+        double adjustment = difference*.07;
         FrontLeft.setTargetPosition((int) (FrontLeft.getCurrentPosition() + EncoderTicks));
         FrontRight.setTargetPosition((int) (FrontRight.getTargetPosition() + EncoderTicks));
         BackLeft.setTargetPosition((int) (BackLeft.getCurrentPosition() + EncoderTicks));
@@ -281,6 +313,8 @@ public abstract class LinearHardwareMap extends LinearOpMode {
                 BackLeft.isBusy() &&
                 BackRight.isBusy()
                 ) {
+
+            setPower(minPower+adjustment,minPower-adjustment,minPower+adjustment,minPower-adjustment);
             telemetry.addData("FL", FrontLeft.getCurrentPosition());
             telemetry.addData("FR", FrontRight.getCurrentPosition());
             telemetry.addData("BL", BackLeft.getCurrentPosition());
@@ -316,6 +350,43 @@ public abstract class LinearHardwareMap extends LinearOpMode {
         }setPower(0,0,0,0);
     }
 
+    public void Turn(double leftpower,double rightpower, int TargetAngle,String Direction) {
+        double FrontLeftTurnPower = 0;
+        double FrontRightTurnPower = 0;
+        double BackLeftTurnPower = 0;
+        double BackRightTurnPower = 0;
+        SetMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(300);
+        setMaxSpeed(2000);
+        double Adjustment = TurningConstant*(Math.abs(getIntegratedZValue()-TargetAngle));
+        double LeftPower = leftpower;
+        double RightPower = rightpower;
+
+            if (Direction == "clockwise"){
+                FrontLeftTurnPower = LeftPower;
+                FrontRightTurnPower =-RightPower ;
+                BackLeftTurnPower = LeftPower;
+                BackRightTurnPower =-RightPower ;}
+
+            if (Direction =="counterclockwise"){
+                FrontLeftTurnPower = -LeftPower;
+                FrontRightTurnPower = RightPower;
+                BackLeftTurnPower = -LeftPower;
+                BackRightTurnPower = RightPower;}
+        sleep(300);
+
+
+        setPower(FrontLeftTurnPower, FrontRightTurnPower, BackLeftTurnPower,BackRightTurnPower);
+        while (opModeIsActive()&&!isStopRequested()&&Math.abs(TargetAngle- getIntegratedZValue() ) > 3);
+        {
+            setPower(FrontLeftTurnPower, FrontRightTurnPower, BackLeftTurnPower,BackRightTurnPower);idle();
+            telemetry.addData(">", "Turning!");
+            telemetry.update();
+
+        }
+        setPower(0, 0, 0, 0);
+    }
+
     public void Turn(double power, int TargetAngle, boolean Pivot,String Direction) {
         double FrontLeftTurnPower = 0;
         double FrontRightTurnPower = 0;
@@ -331,16 +402,16 @@ public abstract class LinearHardwareMap extends LinearOpMode {
                 if (Direction == "clockwise"){
 
                     FrontLeftTurnPower = 0;
-                    FrontRightTurnPower =Power ;
-                    BackLeftTurnPower = 0;
-                    BackRightTurnPower =Power;
+                    FrontRightTurnPower =-Power ;
+                    BackLeftTurnPower =0;
+                    BackRightTurnPower =-Power;
                     }
 
                 if (Direction =="counterclockwise"){
-                    FrontLeftTurnPower = 0;
-                    FrontRightTurnPower = -Power;
-                    BackLeftTurnPower = 0;
-                    BackRightTurnPower = -Power;}
+                    FrontLeftTurnPower = -Power;
+                    FrontRightTurnPower = Power;
+                    BackLeftTurnPower = -Power;
+                    BackRightTurnPower = Power;}
 
 
             }
@@ -366,103 +437,62 @@ public abstract class LinearHardwareMap extends LinearOpMode {
                 telemetry.update();
 
             }
-            setPower(0, 0, 0, 0);/*
-
-        } else {
-            if (TargetAngle > getIntegratedZValue()) {
-                FrontLeftTurnPower = -Power;
-                FrontRightTurnPower = Power;
-                BackLeftTurnPower = -Power;
-                BackRightTurnPower = Power;
-
-            } else if (TargetAngle < getIntegratedZValue()) {
-                FrontLeftTurnPower = -Power;
-                FrontRightTurnPower = Power;
-                BackLeftTurnPower = -Power;
-                BackRightTurnPower = Power;
-            } else {
-                setPower(0, 0, 0, 0);
-            }
-                setPower(FrontLeftTurnPower, FrontRightTurnPower, BackLeftTurnPower, BackRightTurnPower);
-
-            while (Math.abs(getIntegratedZValue() - TargetAngle) > 1.25);
-            {
-                setPower(FrontLeftTurnPower, FrontRightTurnPower, BackLeftTurnPower, BackRightTurnPower);
-                idle();
-                telemetry.addData(">", "Turning!");
-                sleep(50);
-
-            }
             setPower(0, 0, 0, 0);
-        }*/
     }
 
     public void DriveToWall(int Distance,double Power) {
-        while (opModeIsActive()&&!isStopRequested()&&FrontRangeSensor.getDistance(DistanceUnit.INCH) > Distance) {
-            setPower(Power, Power, Power, Power);
+        while (FrontRangeSensor.getDistance(DistanceUnit.INCH) > Distance) {
+            setPower(Power, Power, Power, Power,.8);
+            setMaxSpeed(2000,.8);
         }
         setPower(0, 0, 0, 0);
     }
 
-    public void FindWhiteLine(OpticalDistanceSensor colorSensor,double Power) {
-        while (opModeIsActive()&&!isStopRequested()&&colorSensor.getLightDetected()>50) {
-            setPower(Power, Power, Power, Power);
+    public void FindWhiteLine(OpticalDistanceSensor LeftODS,OpticalDistanceSensor RightODS,double Power,double Reflectance) {
+        SetMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double LeftPower;
+        double RightPower;
+        runtime.reset();
+        while (opModeIsActive()&&!isStopRequested()&&LeftODS.getLightDetected()<.6&&RightODS.getLightDetected()>.6) {
+            if(runtime.seconds()>1.5){
+                if (LeftODS.getLightDetected()<Reflectance){LeftPower=Power;}else{LeftPower=0;}
+                if (RightODS.getLightDetected()<Reflectance){RightPower=Power;}else{RightPower=0;}
+                setPower(-LeftPower, -RightPower, -LeftPower, -RightPower,.8);
+                setMaxSpeed(2000,.8);}
+            else{
+                if (LeftODS.getLightDetected()<Reflectance){LeftPower=Power;}else{LeftPower=0;}
+                if (RightODS.getLightDetected()<Reflectance){RightPower=Power;}else{RightPower=0;}
+                setPower(LeftPower, RightPower, LeftPower, RightPower,.8);
+                setMaxSpeed(2000,.8);}
         }
         setPower(0,0,0,0);
     }
 
+
+
     public void ButtonPush(String Color) {
-        if (Color.toLowerCase() == "blue") {
-            FindWhiteLine(WhiteLineFinder,.25);
-            Turn(.125, 90, true,"Clockwise");
-            DriveToWall(4,.25);
-            if (BeaconColorSensor.blue() > BeaconColorSensor.red() && BeaconColorSensor.blue() > BeaconColorSensor.green()) {
-                Drive(.25, -3, getIntegratedZValue(), 2, false);
-                //ButtonPusher.setPosition((buttonPusherLeft + buttonPusherRight) / 2);sleep(500);
-                ButtonPusherArm.setPosition(buttonPusherEngage);sleep(500);
-                ButtonPusher.setPosition(buttonPusherLeft);sleep(500);
-                ButtonPusherArm.setPosition(buttonPusherStow);sleep(500);
-                DriveToWall(3,.25);
-
-
-            } else if (BeaconColorSensor.red() > BeaconColorSensor.blue() && BeaconColorSensor.red() > BeaconColorSensor.green()) {
-                Drive(.25, -3, getIntegratedZValue(), 2, false);
-                //ButtonPusher.setPosition((buttonPusherLeft + buttonPusherRight) / 2);sleep(500);
-                ButtonPusherArm.setPosition(buttonPusherEngage);sleep(500);
-                ButtonPusher.setPosition(buttonPusherRight);sleep(500);
-                ButtonPusherArm.setPosition(buttonPusherStow);sleep(500);
-                DriveToWall(3,.25);
-            } else {
-                telemetry.addData(">", "Color Sensor Did not Find The Beacon");
-                telemetry.update();
-                requestOpModeStop();
-            }
-        } else {
-            FindWhiteLine(WhiteLineFinder,.25);
-            Turn(.125, -90, true,"CounterClockwise");
-            sleep(300);
-            DriveToWall(4,.25);
-            setPower(0, 0, 0, 0);
-            if (BeaconColorSensor.red() > BeaconColorSensor.blue() && BeaconColorSensor.red() > BeaconColorSensor.green()) {
-                Drive(.25, -3, getIntegratedZValue(), 2, false);
-                ButtonPusher.setPosition((buttonPusherLeft + buttonPusherRight) / 2);
-                ButtonPusherArm.setPosition(buttonPusherEngage);
-                ButtonPusher.setPosition(buttonPusherLeft);
-                DriveToWall(2,.25);
-            } else if (BeaconColorSensor.blue() > BeaconColorSensor.red() && BeaconColorSensor.blue() > BeaconColorSensor.green()) {
-                Drive(.25, -3, getIntegratedZValue(), 2, false);
-                ButtonPusher.setPosition((buttonPusherLeft + buttonPusherRight) / 2);
-                ButtonPusherArm.setPosition(buttonPusherEngage);
-                ButtonPusher.setPosition(buttonPusherRight);
-                DriveToWall(2,.25);
-            } else {
-                telemetry.addData(">", "Color Sensor Did not Find The Beacon");
-                requestOpModeStop();
+        while(!ButtonPusherMax.isPressed()){ButtonPusherActuator.setPower(.5);
+            if (!ButtonPusherMin.isPressed()){
+            ButtonPusher.setPosition(buttonPusherCenter);}}
+        sleep(500);
+        if( Color.toLowerCase()=="red"){
+            if (BeaconColorSensor.red()>BeaconColorSensor.blue()){
+            ButtonPusher.setPosition(buttonPusherLeft);}
+            else if (BeaconColorSensor.blue()>BeaconColorSensor.red()){
+                ButtonPusher.setPosition(buttonPusherRight);}
+            else {
+                RobotLog.a("Beacon Color Not Found");
             }
         }
-        ButtonPusher.setPosition((buttonPusherLeft + buttonPusherRight) / 2);
-        ButtonPusherArm.setPosition(buttonPusherStow);
-
+        if (Color.toLowerCase()=="blue"){
+            if (BeaconColorSensor.blue()>BeaconColorSensor.red()){
+            ButtonPusher.setPosition(buttonPusherLeft);}
+        else if (BeaconColorSensor.red()>BeaconColorSensor.blue()){
+            ButtonPusher.setPosition(buttonPusherRight);}
+        else {
+            RobotLog.a("Beacon Color Not Found");
+        }}
+        sleep(300);
 
     }
 

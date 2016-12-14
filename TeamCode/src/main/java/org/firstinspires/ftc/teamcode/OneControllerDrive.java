@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -16,6 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * Created by Trevor on 10/2/2016.
  */
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "OneControllerDemoOp", group = "6994 Bot")
+@Disabled
 public class OneControllerDrive extends FTC_6994_Template{
     @Override
     public void init() {

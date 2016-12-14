@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 /**
  * Created by Trevor on 11/26/2016.
  */
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "ButtonPresserTest", group = "6994 Bot")
+@Disabled
 public class ButtonPresserTest extends LinearHardwareMap {
     @Override
     public void runOpMode() throws InterruptedException {

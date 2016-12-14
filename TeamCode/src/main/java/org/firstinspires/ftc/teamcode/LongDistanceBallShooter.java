@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
@@ -17,9 +18,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import java.lang.annotation.Target;
 import java.util.Set;
 
+*/
 /**
  * Created by Trevor on 11/6/2016.
- */
+ *//*
+
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "LongDistance", group = "6994 Bot")
 public class LongDistanceBallShooter extends LinearHardwareMap {
@@ -71,7 +74,8 @@ public class LongDistanceBallShooter extends LinearHardwareMap {
         sleep(2000);
 
 
-        /*while (Gyro.isCalibrating() && opModeIsActive()) {
+        */
+/*while (Gyro.isCalibrating() && opModeIsActive()) {
             telemetry.addData(">", "Calibrating Gyro");
             telemetry.update();
             idle();
@@ -79,7 +83,8 @@ public class LongDistanceBallShooter extends LinearHardwareMap {
             telemetry.addData(">", "Ready!");
             telemetry.addData(">", "Hey Jason, Try not to Fuck up");
             telemetry.update();
-        }*/
+        }*//*
+
 
         waitForStart();
 
@@ -124,6 +129,7 @@ public class LongDistanceBallShooter extends LinearHardwareMap {
 
         }
 
+*/
 /*
 
                 if (gamepad1.a && gamepad1.right_bumper){
@@ -261,12 +267,14 @@ public class LongDistanceBallShooter extends LinearHardwareMap {
                 telemetry.addData("ReverseLeftPower",ReverseRightPower);
                 telemetry.addData("minPower",minPower);
                 telemetry.update();
-*/
+*//*
+
 
     }
 
 
-        /*
+        */
+/*
             runtime.reset();
             sleep(50);
             DriveWithoutEncoder(.375, InitialTheta, runtime.seconds() < HypotenuseDriveTime, false);
@@ -280,7 +288,8 @@ public class LongDistanceBallShooter extends LinearHardwareMap {
             sleep(50);
             sleep(50);
             runtime.reset();
-    */
+    *//*
+
 
 
     public boolean WhiteLineFound() {
@@ -544,3 +553,4 @@ public class LongDistanceBallShooter extends LinearHardwareMap {
 
 }
 
+*/

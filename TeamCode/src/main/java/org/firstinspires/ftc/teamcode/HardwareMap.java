@@ -254,6 +254,7 @@ public abstract class HardwareMap extends OpMode {
             }
             if (CapBallFork !=null){CapBallFork.setPosition(CapBallForkStart);}
 
+
         }
 
         public void setPower(double FL, double FR, double BL, double BR) {

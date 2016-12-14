@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -21,8 +22,9 @@ import java.util.Set;
  * Created by Trevor on 11/6/2016.
  */
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "2inch ->Shoot 2 -> Get Cap Ball", group = "6994 Bot")
-public class ShortDistanceWithDriveForward extends LinearHardwareMap {
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Wait -> Shoot 2 -> Corner", group = "6994 Bot")
+@Disabled
+public class ShortDistanceWithDriveToVortexAndWait extends LinearHardwareMap {
     public float Linearlasterror;
     int InitialTheta = 30;
     double HypotenuseLength = 50;
@@ -79,54 +81,44 @@ public class ShortDistanceWithDriveForward extends LinearHardwareMap {
             telemetry.addData(">", "Hey Jason, Try not to Fuck up");
             telemetry.update();
         }*/
-
+        Gyro.calibrate();
         waitForStart();
-
+        while(Gyro.isCalibrating()){}
         if(opModeIsActive())
-         {
-             //BallControl.setPosition(ballControlStartPosition);
-             Drive(.25,2,0,4,false);
-             while(!CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
-             sleep(500);
-             BallControl.setPosition(0);
-             while (CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
-             sleep(500);
-             while (!CatapultStop.isPressed()) {Catapult.setPower(1);}
-             Catapult.setPower(0);
-             BallControl.setPosition(1);
-             sleep(500);
-             BallCollection.setPower(1);
-             sleep(3000);
-             BallCollection.setPower(0);
-             BallControl.setPosition(0);
-             while(!CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
-             sleep(500);
-             while (CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
-             sleep(500);
-             while (!CatapultStop.isPressed()) {Catapult.setPower(1);}
-             //Catapult.setPower(0);
+        {
+            //BallControl.setPosition(ballControlStartPosition);
+            Drive(.375,20,0,4,false);
+            while(!CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
+            while (CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
+            while (!CatapultStop.isPressed()) {Catapult.setPower(1);}
+            Catapult.setPower(0);
+            sleep(500);
+            BallCollection.setPower(1);
+            sleep(3000);
+            BallCollection.setPower(0);
+            while(!CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
+            while (CatapultStop.isPressed()){Catapult.setPower(1);}Catapult.setPower(0);
+            while (!CatapultStop.isPressed()) {Catapult.setPower(1);}
+            //Catapult.setPower(0);
 
-             //sleep(4000);
-             SetMode(DcMotor.RunMode.RUN_USING_ENCODER);
-             Catapult.setPower(0);
-             setMaxSpeed(4500,.8);
-             setPower(.75,.75,.75,.75,.8);
-             sleep(3000);
-             setPower(0, 0, 0, 0);
-             setPower(0, 0, 0, 0);
-             Catapult.setPower(0);
-             BallCollection.setPower(0);
-             requestOpModeStop();
+            //sleep(4000);
+            Catapult.setPower(0);
+            Turn(.25,90,false,"clockwise");
+            Drive(.375,60,90,4,false);
+            setPower(0, 0, 0, 0);
+            setPower(0, 0, 0, 0);
+            Catapult.setPower(0);
+            BallCollection.setPower(0);
+            requestOpModeStop();
 
         }
-        else
-         {
-             BallControl.setPosition(ballControlStartPosition);
-             BallCollection.setPower(0);
-             setPower(0,0,0,0);
-             Catapult.setPower(0);
+        else {
+            BallControl.setPosition(ballControlStartPosition);
+            BallCollection.setPower(0);
+            setPower(0, 0, 0, 0);
+            Catapult.setPower(0);
 
-         }}
-
+        }
+    }
 }
 

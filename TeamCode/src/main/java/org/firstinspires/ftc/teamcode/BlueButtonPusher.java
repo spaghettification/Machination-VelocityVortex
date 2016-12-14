@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.AccelerationSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -14,6 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Please Work", group = "6994 Bot")
+@Disabled
 public class BlueButtonPusher extends HardwareMap {
 
     private final static int Encoder_CPR = 1120;

@@ -49,6 +49,7 @@ public class TeleOp extends FTC_6994_Template{
         ButtonPusher.setPosition(0);
         ButtonPusherArm.setPosition(0);
         AutonomousHardwareMap();
+        InitializeServoPositions();
         SetMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
@@ -64,11 +65,9 @@ public class TeleOp extends FTC_6994_Template{
             CapBallFork.setPosition(CapBallFork.getPosition()+.1);}
         if(gamepad1.dpad_down){
             CapBallFork.setPosition(CapBallFork.getPosition()-.1);}
-        if(gamepad2.dpad_up){
-            BallControl.setPosition(BallControl.getPosition()+.1);}
-        if(gamepad2.dpad_down){
-            BallControl.setPosition(
-                    BallControl.getPosition()-.1);}
+        if(gamepad2.right_bumper){
+            BallControl.setPosition(1);}
+        else{BallControl.setPosition(0);}
         if (gamepad2.b && !gamepad2.left_bumper){
             ButtonPusherArm.setPosition(ButtonPusherArm.getPosition()-.1);
         }
@@ -85,7 +84,7 @@ public class TeleOp extends FTC_6994_Template{
         BallCollection.setPower(-scaleInput(gamepad2.right_stick_y));
         float LeftPower = gamepad1.right_stick_y;
         float RightPower = gamepad1.left_stick_y;
-        if (gamepad2.dpad_up){
+        /*if (gamepad2.dpad_up){
             CapBallLiftLeft.setPower(1);
             CapBallLiftRight.setPower(1);
         }
@@ -95,7 +94,7 @@ public class TeleOp extends FTC_6994_Template{
         }
         else {
             CapBallLiftLeft.setPower(0);
-            CapBallLiftRight.setPower(0);}
+            CapBallLiftRight.setPower(0);}*/
 
             if (gamepad1.left_bumper){
                 FrontLeft.setPower(Range.clip(scaleInput(LeftPower)/2,-.5,.5));
